@@ -1,0 +1,90 @@
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+
+    update-linuxmain:
+        name: Update Linux Main
+        runs-on: macOS-latest
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v1
+        - name: Update
+          run: swift test --generate-linuxmain
+        - name: Commit Changes
+          continue-on-error: true
+          run: |
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git commit -m "Updated Linux Main" -a
+        - name: Push changes
+          continue-on-error: true
+          uses: ad-m/github-push-action@master
+          with:
+            github_token: ${{ secrets.GITHUB_TOKEN }}
+
+    
+    linux-52:
+        name: Linux (Swift 5.2 Nightly)
+        needs: update-linuxmain
+        runs-on: ubuntu-latest
+        container: swiftlang/swift:nightly-5.2
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v1
+        - name: Swift Version
+          run: swift --version
+        - name: Make Logs Directory
+          run: mkdir logs
+        - name: Build (Debug)
+          run: swift build -v -c debug
+        - name: Build (Release)
+          run: swift build -v -c release
+        - name: Test (Debug)
+          run: swift test -v -c debug 
+        - name: Test (Release)
+          run: swift test -v -c release -Xswiftc -enable-testing
+
+    
+    linux-n:
+        name: Linux (Swift Nightly)
+        needs: update-linuxmain
+        runs-on: ubuntu-latest
+        container: swiftlang/swift:nightly
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v1
+        - name: Swift Version
+          run: swift --version
+        - name: Make Logs Directory
+          run: mkdir logs
+        - name: Build (Debug)
+          run: swift build -v -c debug
+        - name: Build (Release)
+          run: swift build -v -c release
+        - name: Test (Debug)
+          run: swift test -v -c debug 
+        - name: Test (Release)
+          run: swift test -v -c release -Xswiftc -enable-testing
+
+    
+    macOS:
+        name: macOS
+        runs-on: macOS-latest
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v1
+        - name: Swift Version
+          run: swift --version
+        - name: Make Logs Directory
+          run: mkdir logs
+        - name: Build (Debug)
+          run: swift build -v -c debug
+        - name: Build (Release)
+          run: swift build -v -c release
+        - name: Test (Debug)
+          run: swift test -v -c debug 
+        - name: Test (Release)
+          run: swift test -v -c release -Xswiftc -enable-testing
+
